@@ -1,0 +1,4 @@
+node_modules/
+.env
+test.md
+implementacao_plan.md

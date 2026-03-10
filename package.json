@@ -1,0 +1,18 @@
+{
+  "name": "orders-api",
+  "version": "1.0.0",
+  "description": "API para gerenciamento de pedidos",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js"
+  },
+  "keywords": ["api", "orders", "express", "mongodb"],
+  "author": "Ricardo Andreotti Gonçalves",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "mongoose": "^9.2.4"
+  }
+}
