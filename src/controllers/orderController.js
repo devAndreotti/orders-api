@@ -1,5 +1,5 @@
 const Order = require('../models/orderModel');
-const { mapOrderToDatabase } = require('../mappers/orderMapper');
+const { mapOrderToDatabase, mapUpdateToDatabase } = require('../mappers/orderMapper');
 
 // POST /order — Criar novo pedido
 async function createOrder(req, res) {
@@ -57,7 +57,82 @@ async function getOrderById(req, res) {
   }
 }
 
+// GET /order/list — Listar todos os pedidos
+async function listOrders(req, res) {
+  try {
+    const orders = await Order.find();
+    return res.status(200).json(orders);
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Erro interno do servidor',
+      message: error.message,
+    });
+  }
+}
+
+// PUT /order/:numeroPedido — Atualizar pedido
+async function updateOrder(req, res) {
+  try {
+    const { numeroPedido } = req.params;
+    const updateData = mapUpdateToDatabase(req.body);
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        error: 'Dados inválidos',
+        message: 'Nenhum campo válido fornecido para atualização',
+      });
+    }
+
+    const updatedOrder = await Order.findOneAndUpdate(
+      { orderId: numeroPedido },
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedOrder) {
+      return res.status(404).json({
+        error: 'Pedido não encontrado',
+        message: `Nenhum pedido encontrado com o número ${numeroPedido}`,
+      });
+    }
+
+    return res.status(200).json(updatedOrder);
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Erro interno do servidor',
+      message: error.message,
+    });
+  }
+}
+
+// DELETE /order/:numeroPedido — Deletar pedido
+async function deleteOrder(req, res) {
+  try {
+    const { numeroPedido } = req.params;
+    const deletedOrder = await Order.findOneAndDelete({ orderId: numeroPedido });
+
+    if (!deletedOrder) {
+      return res.status(404).json({
+        error: 'Pedido não encontrado',
+        message: `Nenhum pedido encontrado com o número ${numeroPedido}`,
+      });
+    }
+
+    return res.status(200).json({
+      message: `Pedido ${numeroPedido} deletado com sucesso`,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Erro interno do servidor',
+      message: error.message,
+    });
+  }
+}
+
 module.exports = {
   createOrder,
   getOrderById,
+  listOrders,
+  updateOrder,
+  deleteOrder,
 };
