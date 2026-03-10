@@ -2,11 +2,16 @@ const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
+const orderRoutes = require('./routes/orderRoutes');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware para parsear JSON
 app.use(express.json());
+
+// Rotas
+app.use('/order', orderRoutes);
 
 // Conexão com o MongoDB e inicialização do servidor
 mongoose
