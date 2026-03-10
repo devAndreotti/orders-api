@@ -6,6 +6,7 @@ async function createOrder(req, res) {
   try {
     const { numeroPedido, valorTotal, dataCriacao, items } = req.body;
 
+    // Validação dos campos obrigatórios
     if (!numeroPedido || valorTotal === undefined || !dataCriacao || !items) {
       return res.status(400).json({
         error: 'Dados inválidos',
@@ -13,8 +14,10 @@ async function createOrder(req, res) {
       });
     }
 
+    // Mapear campos PT-BR para EN
     const orderData = mapOrderToDatabase(req.body);
 
+    // Verificar se o pedido já existe
     const existingOrder = await Order.findOne({ orderId: orderData.orderId });
     if (existingOrder) {
       return res.status(400).json({
@@ -28,6 +31,14 @@ async function createOrder(req, res) {
 
     return res.status(201).json(savedOrder);
   } catch (error) {
+    // Erro de validação do Mongoose
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        error: 'Erro de validação',
+        message: error.message,
+      });
+    }
+
     return res.status(500).json({
       error: 'Erro interno do servidor',
       message: error.message,
@@ -74,6 +85,8 @@ async function listOrders(req, res) {
 async function updateOrder(req, res) {
   try {
     const { numeroPedido } = req.params;
+
+    // Mapear campos para atualização
     const updateData = mapUpdateToDatabase(req.body);
 
     if (Object.keys(updateData).length === 0) {
@@ -98,6 +111,14 @@ async function updateOrder(req, res) {
 
     return res.status(200).json(updatedOrder);
   } catch (error) {
+    // Erro de validação do Mongoose
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        error: 'Erro de validação',
+        message: error.message,
+      });
+    }
+
     return res.status(500).json({
       error: 'Erro interno do servidor',
       message: error.message,
