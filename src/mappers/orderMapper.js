@@ -42,4 +42,26 @@ function mapUpdateToDatabase(body) {
   return mapped;
 }
 
-module.exports = { mapOrderToDatabase, mapUpdateToDatabase };
+/**
+ * Transforma a entidade do banco (EN) para o formato de resposta da API (PT-BR),
+ * escondendo campos internos como _id e __v.
+ */
+function mapOrderToResponse(orderDoc) {
+  if (!orderDoc) return null;
+  const order = orderDoc.toObject ? orderDoc.toObject() : orderDoc;
+
+  return {
+    numeroPedido: order.orderId,
+    valorTotal: order.value,
+    dataCriacao: order.creationDate,
+    items: Array.isArray(order.items)
+      ? order.items.map((item) => ({
+          idItem: String(item.productId),
+          quantidadeItem: item.quantity,
+          valorItem: item.price,
+        }))
+      : [],
+  };
+}
+
+module.exports = { mapOrderToDatabase, mapUpdateToDatabase, mapOrderToResponse };

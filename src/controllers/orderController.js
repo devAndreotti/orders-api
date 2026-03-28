@@ -1,5 +1,5 @@
 const Order = require('../models/orderModel');
-const { mapOrderToDatabase, mapUpdateToDatabase } = require('../mappers/orderMapper');
+const { mapOrderToDatabase, mapUpdateToDatabase, mapOrderToResponse } = require('../mappers/orderMapper');
 
 // POST /order — Criar novo pedido
 async function createOrder(req, res) {
@@ -29,7 +29,7 @@ async function createOrder(req, res) {
     const order = new Order(orderData);
     const savedOrder = await order.save();
 
-    return res.status(201).json(savedOrder);
+    return res.status(201).json(mapOrderToResponse(savedOrder));
   } catch (error) {
     // Erro de validação do Mongoose
     if (error.name === 'ValidationError') {
@@ -59,7 +59,7 @@ async function getOrderById(req, res) {
       });
     }
 
-    return res.status(200).json(order);
+    return res.status(200).json(mapOrderToResponse(order));
   } catch (error) {
     return res.status(500).json({
       error: 'Erro interno do servidor',
@@ -72,7 +72,7 @@ async function getOrderById(req, res) {
 async function listOrders(req, res) {
   try {
     const orders = await Order.find();
-    return res.status(200).json(orders);
+    return res.status(200).json(orders.map(mapOrderToResponse));
   } catch (error) {
     return res.status(500).json({
       error: 'Erro interno do servidor',
@@ -109,7 +109,7 @@ async function updateOrder(req, res) {
       });
     }
 
-    return res.status(200).json(updatedOrder);
+    return res.status(200).json(mapOrderToResponse(updatedOrder));
   } catch (error) {
     if (error.name === 'ValidationError') {
       return res.status(400).json({

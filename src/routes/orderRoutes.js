@@ -11,8 +11,8 @@ const {
 // POST /order — Criar novo pedido
 router.post('/', createOrder);
 
-// GET /order/list — Listar todos os pedidos (deve vir antes de /:numeroPedido)
-router.get('/list', listOrders);
+// GET /order — Listar todos os pedidos
+router.get('/', listOrders);
 
 // GET /order/:numeroPedido — Obter pedido pelo número
 router.get('/:numeroPedido', getOrderById);
