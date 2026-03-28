@@ -2,7 +2,7 @@ const Order = require('../models/orderModel');
 const { mapOrderToDatabase, mapUpdateToDatabase, mapOrderToResponse } = require('../mappers/orderMapper');
 
 // POST /order — Criar novo pedido
-async function createOrder(req, res) {
+async function createOrder(req, res, next) {
   try {
     const { numeroPedido, valorTotal, dataCriacao, items } = req.body;
 
@@ -17,37 +17,17 @@ async function createOrder(req, res) {
     // Mapear campos PT-BR para EN
     const orderData = mapOrderToDatabase(req.body);
 
-    // Verificar se o pedido já existe
-    const existingOrder = await Order.findOne({ orderId: orderData.orderId });
-    if (existingOrder) {
-      return res.status(400).json({
-        error: 'Pedido duplicado',
-        message: `O pedido ${orderData.orderId} já existe`,
-      });
-    }
-
     const order = new Order(orderData);
     const savedOrder = await order.save();
 
     return res.status(201).json(mapOrderToResponse(savedOrder));
   } catch (error) {
-    // Erro de validação do Mongoose
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({
-        error: 'Erro de validação',
-        message: error.message,
-      });
-    }
-
-    return res.status(500).json({
-      error: 'Erro interno do servidor',
-      message: error.message,
-    });
+    next(error);
   }
 }
 
 // GET /order/:numeroPedido — Obter pedido pelo número
-async function getOrderById(req, res) {
+async function getOrderById(req, res, next) {
   try {
     const { numeroPedido } = req.params;
     const order = await Order.findOne({ orderId: numeroPedido });
@@ -61,28 +41,39 @@ async function getOrderById(req, res) {
 
     return res.status(200).json(mapOrderToResponse(order));
   } catch (error) {
-    return res.status(500).json({
-      error: 'Erro interno do servidor',
-      message: error.message,
-    });
+    next(error);
   }
 }
 
-// GET /order/list — Listar todos os pedidos
-async function listOrders(req, res) {
+// GET /order — Listar todos os pedidos com paginação
+async function listOrders(req, res, next) {
   try {
-    const orders = await Order.find();
-    return res.status(200).json(orders.map(mapOrderToResponse));
-  } catch (error) {
-    return res.status(500).json({
-      error: 'Erro interno do servidor',
-      message: error.message,
+    // Paginação
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      Order.find().skip(skip).limit(limit),
+      Order.countDocuments(),
+    ]);
+
+    return res.status(200).json({
+      data: orders.map(mapOrderToResponse),
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     });
+  } catch (error) {
+    next(error);
   }
 }
 
 // PUT /order/:numeroPedido — Atualizar pedido
-async function updateOrder(req, res) {
+async function updateOrder(req, res, next) {
   try {
     const { numeroPedido } = req.params;
 
@@ -111,22 +102,12 @@ async function updateOrder(req, res) {
 
     return res.status(200).json(mapOrderToResponse(updatedOrder));
   } catch (error) {
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({
-        error: 'Erro de validação',
-        message: error.message,
-      });
-    }
-
-    return res.status(500).json({
-      error: 'Erro interno do servidor',
-      message: error.message,
-    });
+    next(error);
   }
 }
 
 // DELETE /order/:numeroPedido — Deletar pedido
-async function deleteOrder(req, res) {
+async function deleteOrder(req, res, next) {
   try {
     const { numeroPedido } = req.params;
     const deletedOrder = await Order.findOneAndDelete({ orderId: numeroPedido });
@@ -142,10 +123,7 @@ async function deleteOrder(req, res) {
       message: `Pedido ${numeroPedido} deletado com sucesso`,
     });
   } catch (error) {
-    return res.status(500).json({
-      error: 'Erro interno do servidor',
-      message: error.message,
-    });
+    next(error);
   }
 }
 
@@ -156,3 +134,4 @@ module.exports = {
   updateOrder,
   deleteOrder,
 };
+
