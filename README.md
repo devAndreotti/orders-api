@@ -37,6 +37,9 @@ npm start
 
 # Modo desenvolvimento (com auto-reload)
 npm run dev
+
+# Executar suíte de testes (Jest + Supertest)
+npm test
 ```
 
 O servidor será iniciado em `http://localhost:3000`.
@@ -72,10 +75,10 @@ curl --location 'http://localhost:3000/order/v10089015vdb-01'
 
 **Resposta:** `200 OK` ou `404 Not Found`
 
-### Listar Todos os Pedidos
+### Listar Pedidos (Paginado)
 
 ```bash
-curl --location 'http://localhost:3000/order/list'
+curl --location 'http://localhost:3000/order?page=1&limit=10'
 ```
 
 **Resposta:** `200 OK`
@@ -129,3 +132,11 @@ A API recebe os dados no formato PT-BR e os transforma para o formato EN antes d
 | Não encontrado     | `404 Not Found`           |
 | Dados inválidos    | `400 Bad Request`         |
 | Erro no servidor   | `500 Internal Server Error` |
+
+---
+
+## Observações de Arquitetura
+
+- **Graceful Shutdown**: A API lida com sinais `SIGTERM` e `SIGINT` para encerrar a conexão ao banco de dados e as requisições ativas de forma segura.
+- **Segurança e Log Estruturado**: Utiliza `helmet`, `cors` e limites de requisição por padrão (`express-rate-limit`). O console da aplicação exibe mensagens formatadas usando `pino-http`.
+- **Tratamento Global de Erros**: Erros como *duplicate key* (quando um mesmo `numeroPedido` é passado mais de uma vez) ou erros de formato JSON são tratados e devolvidos ao cliente em resposta padronizada e simplificada.
