@@ -4,7 +4,8 @@
   "description": "API para gerenciamento de pedidos",
   "main": "src/app.js",
   "scripts": {
-    "start": "node src/app.js"
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js"
   },
   "keywords": ["api", "orders", "express", "mongodb"],
   "author": "Ricardo Andreotti Gonçalves",

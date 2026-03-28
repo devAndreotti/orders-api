@@ -13,7 +13,7 @@ API para gerenciamento de pedidos desenvolvida com Node.js, Express e MongoDB.
 
 ```bash
 # Clonar o repositório
-git clone https://github.com/devAndreotti/orders-api.git
+git clone https://github.com/seu-usuario/orders-api.git
 cd orders-api
 
 # Instalar dependências

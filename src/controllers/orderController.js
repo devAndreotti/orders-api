@@ -111,7 +111,6 @@ async function updateOrder(req, res) {
 
     return res.status(200).json(updatedOrder);
   } catch (error) {
-    // Erro de validação do Mongoose
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         error: 'Erro de validação',
