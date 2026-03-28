@@ -37,18 +37,58 @@ app.use('/order', orderRoutes);
 // Tratamento de Erros Global
 app.use(errorHandler);
 
-// Inicialização com Graceful Shutdown na fase 3 será feito depois
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    logger.info('Conectado ao MongoDB com sucesso');
-    app.listen(PORT, () => {
-      logger.info(`Servidor rodando na porta ${PORT}`);
+let server;
+
+// Conexão e inicialização apenas se rodado diretamente (evita problemas com testes)
+if (require.main === module) {
+  mongoose
+    .connect(process.env.MONGO_URI)
+    .then(() => {
+      logger.info('Conectado ao MongoDB com sucesso');
+      server = app.listen(PORT, () => {
+        logger.info(`Servidor rodando na porta ${PORT}`);
+      });
+    })
+    .catch((error) => {
+      logger.error({ err: error }, 'Erro ao conectar ao MongoDB');
+      process.exit(1);
     });
-  })
-  .catch((error) => {
-    logger.error({ err: error }, 'Erro ao conectar ao MongoDB');
+}
+
+// Graceful Shutdown
+const gracefulShutdown = () => {
+  logger.info('Sinal de parada recebido. Iniciando graceful shutdown...');
+  
+  const shutdownDatabase = async () => {
+    try {
+      if (mongoose.connection.readyState === 1) {
+        await mongoose.connection.close();
+        logger.info('Conexão com o MongoDB encerrada.');
+      }
+      process.exit(0);
+    } catch (err) {
+      logger.error({ err }, 'Erro ao fechar conexão com MongoDB');
+      process.exit(1);
+    }
+  };
+
+  if (server) {
+    server.close(() => {
+      logger.info('Servidor HTTP fechado. Encerrando dependências...');
+      shutdownDatabase();
+    });
+  } else {
+    shutdownDatabase();
+  }
+
+  // Force shutdown em 10s
+  setTimeout(() => {
+    logger.error('Encerramento forçado do processo após longo timeout.');
     process.exit(1);
-  });
+  }, 10000).unref();
+};
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
 
 module.exports = app;
